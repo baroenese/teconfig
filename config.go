@@ -9,8 +9,6 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-/* Environment utility */
-
 func loadEnvStr(key string, result *string) {
 	s, ok := os.LookupEnv(key)
 	if !ok {
@@ -28,28 +26,40 @@ func loadEnvUint(key string, result *uint) {
 	if err != nil {
 		return
 	}
-	*result = uint(n) // will clamp the negative value
+	*result = uint(n)
 }
-
-/* Configuration */
 
 type pgConfig struct {
-	Host string `yaml:"host" json:"host"`
-	Port uint   `yaml:"port" json:"port"`
-
-	DBName  string `yaml:"db_name" json:"db_name"`
-	SslMode string `yaml:"ssl_mode" json:"ssl_mode"`
+	Host     string `yaml:"host" json:"host"`
+	Port     uint   `yaml:"port" json:"port"`
+	DBName   string `yaml:"db_name" json:"db_name"`
+	Username string `yaml:"username" json:"username"`
+	Password string `yaml:"password" json:"password"`
+	SslMode  string `yaml:"ssl_mode" json:"ssl_mode"`
 }
 
-func (p pgConfig) ConnStr() string {
-	return fmt.Sprintf("postgres://postgres:example@%s:%d/%s", p.Host, p.Port, p.DBName)
+func (pgConfig pgConfig) ConnStr() string {
+	return fmt.Sprintf("postgres://%s:%s@%s:%d/%s", pgConfig.Username, pgConfig.Password, pgConfig.Host, pgConfig.Port, pgConfig.DBName)
 }
 
-func (p pgConfig) LoadFromEnv() {
-	loadEnvStr("KAD_DB_HOST", &p.Host)
-	loadEnvUint("KAD_DB_PORT", &p.Port)
-	loadEnvStr("KAD_DB_NAME", &p.DBName)
-	loadEnvStr("KAD_DB_SSL", &p.SslMode)
+func (pgConfig pgConfig) LoadFromEnv() {
+	loadEnvStr("KAD_DB_HOST", &pgConfig.Host)
+	loadEnvUint("KAD_DB_PORT", &pgConfig.Port)
+	loadEnvStr("KAD_DB_NAME", &pgConfig.DBName)
+	loadEnvStr("KAD_DB_USERNAME", &pgConfig.Username)
+	loadEnvStr("KAD_DB_PASSWORD", &pgConfig.Password)
+	loadEnvStr("KAD_DB_SSL", &pgConfig.SslMode)
+}
+
+func defaultPgConfig() pgConfig {
+	return pgConfig{
+		Host:     "localhost",
+		Port:     5432,
+		Username: "john",
+		Password: "example",
+		SslMode:  "disabled",
+		DBName:   "db_example",
+	}
 }
 
 type listenConfig struct {
@@ -57,13 +67,13 @@ type listenConfig struct {
 	Port uint   `yaml:"port" json:"port"`
 }
 
-func (l listenConfig) Addr() string {
-	return fmt.Sprintf("%s:%d", l.Host, l.Port)
+func (listenConfig listenConfig) Addr() string {
+	return fmt.Sprintf("%s:%d", listenConfig.Host, listenConfig.Port)
 }
 
-func (l *listenConfig) loadFromEnv() {
-	loadEnvStr("KAD_LISTEN_HOST", &l.Host)
-	loadEnvUint("KAD_LISTEN_PORT", &l.Port)
+func (listenConfig *listenConfig) loadFromEnv() {
+	loadEnvStr("KAD_LISTEN_HOST", &listenConfig.Host)
+	loadEnvUint("KAD_LISTEN_PORT", &listenConfig.Port)
 }
 
 func defaultListenConfig() listenConfig {

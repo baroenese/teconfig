@@ -2,6 +2,7 @@ package teconfig
 
 func DefaultConfig() TeConfig {
 	return TeConfig{
-		Listen: defaultListenConfig(),
+		Listen:   defaultListenConfig(),
+		DBConfig: defaultPgConfig(),
 	}
 }
